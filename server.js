@@ -50,17 +50,17 @@ app.post('/', (req, res) => {
 })
 
 app.post(
-  '/requests/documents',
+  '/api/registro/solicitud-documents',
   upload.single('file'),
   (req, res) => {
     const formData = req.file
     const bodyData = req.body
     console.log('form data', formData)
-    console.log('bodyData', bodyData)
+    console.log('solicitudId', bodyData.solicitudId)
     res.send({
       success: true,
       fileId: uuidv4(), // file ID falso simulando la base de datos.
-      fileName: 'myPhoto.jpg',
+      fileName: faker.system.commonFileName('jpg'),
     })
   },
   (error, req, res, next) => {
@@ -72,7 +72,7 @@ app.post(
   }
 )
 
-app.delete('/requests/documents/:documentId', (req, res) => {
+app.delete('/api/registro/solicitud-documents/:documentId', (req, res) => {
   const documentId = req.params.documentId
   if (!documentId || !isValidDocumentId(documentId)) {
     res.status(400).send({
@@ -87,7 +87,9 @@ app.delete('/requests/documents/:documentId', (req, res) => {
   }
 })
 
-app.get('/api/registro/cat_docs/:catId', (req, res) => {
+app.get('/api/registro/solicitud-documents/', (req, res) => {
+  const pstId = req.query.pstId
+  const solicitudId = req.query.solicitudId
   const documents = [
     {
       id: 111,
@@ -158,9 +160,9 @@ app.get('/api/registro/cat_docs/:catId', (req, res) => {
     },
   ]
 
-  const modifiedDocuments = documents.map(document => {
-    const documentId = faker.string.uuid()
-    const documentName = faker.system.commonFileName('jpg')
+  const modifiedDocuments = documents.map((document, i) => {
+    const documentId = i % 2 === 0 ? faker.string.uuid() : null
+    const documentName = i % 2 === 0 ? faker.system.commonFileName('jpg') : null
     return {
       ...document,
       documentId,
@@ -172,13 +174,22 @@ app.get('/api/registro/cat_docs/:catId', (req, res) => {
     result: {
       data: modifiedDocuments,
       msg: 'Consulta exitosa',
+      pstId,
+      solicitudId,
     },
     success: true,
     error: null,
   })
 })
 
-app.get('/api/registro/photos/:photoId', (req, res) => {
+app.get('/api/registro/solicitud-images/', (req, res) => {
+  const solicitudId = req.query.solicitudId
+  if (!solicitudId) {
+    res.status(400).send({
+      success: false,
+      message: 'Por favor ingresa un ID de solicitud válido',
+    })
+  }
   const emptyArray = []
   for (let i = 0; i < 5; i++) {
     const documentId = faker.string.uuid()
@@ -190,12 +201,36 @@ app.get('/api/registro/photos/:photoId', (req, res) => {
     result: {
       data: emptyArray,
     },
+    solicitudId,
     success: true,
     error: null,
   })
 })
 
-app.delete('/api/registro/photos/:photoId', (req, res) => {
+app.post(
+  '/api/registro/solicitud-images',
+  upload.single('file'),
+  (req, res) => {
+    const formData = req.file
+    const bodyData = req.body
+    console.log('form data', formData)
+    console.log('solicitudId', bodyData.solicitudId)
+    res.send({
+      success: true,
+      fileId: uuidv4(), // file ID falso simulando la base de datos.
+      fileName: faker.system.commonFileName('jpg'),
+    })
+  },
+  (error, req, res, next) => {
+    if (error) {
+      res.status(415).json({ success: false, message: error.message })
+    } else {
+      next()
+    }
+  }
+)
+
+app.delete('/api/registro/solicitud-images/:photoId', (req, res) => {
   const documentId = req.params.photoId
   if (!documentId || !isValidDocumentId(documentId)) {
     res.status(400).send({
